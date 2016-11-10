@@ -67,6 +67,8 @@ from optparse import OptionParser
 import smtplib
 import sys
 import urllib
+import email
+from email.parser import HeaderParser
 
 
 def SetupOptionParser():
@@ -266,7 +268,31 @@ def TestImapAuthentication(user, auth_string):
   imap_conn = imaplib.IMAP4_SSL('imap.gmail.com')
   imap_conn.debug = 4
   imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
+
   imap_conn.select('INBOX')
+
+  # Try search
+  result,data = imap_conn.search(None,"ALL")
+  ids = data[0]
+  id_list = ids.split()
+  latest_email_id = id_list[-1]
+  result, data = imap_conn.fetch(latest_email_id, '(RFC822)')
+  raw_email = data[0][1]
+  email_message = email.message_from_string(raw_email)
+
+  print email_message['To']
+
+  print email.utils.parseaddr(email_message['From'])
+  print email.utils.parseaddr(email_message['To'])
+  print email.parser(email_message['b'])
+
+
+
+  # note that if you want to get text content (body) and the email contains
+  # multiple payloads (plaintext/ html), you must parse each message separately.
+  # use something like the following: (taken from a stackoverflow post)
+
+
 
 
 def TestSmtpAuthentication(user, auth_string):
